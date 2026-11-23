@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { QRCodeCanvas } from "qrcode.react";
 import Link from "next/link";
 import AlertMessage from "../ui/AlertMessage";
 import PublicHeader from "./PublicHeader";
@@ -9,6 +10,7 @@ import descargarAcreditacionPNG from "../../lib/descargarAcreditacionPNG";
 
 export default function Acreditacion({ evento, acreditacion }) {
   const [descargando, setDescargando] = useState(false);
+  const qrRef = useRef(null);
   const [error, setError] = useState(false);
   const fecha = formatearFecha(evento.fecha);
 
@@ -16,7 +18,12 @@ export default function Acreditacion({ evento, acreditacion }) {
     setDescargando(true);
     setError(false);
     try {
-      await descargarAcreditacionPNG({ evento, acreditacion });
+      const qrDataUrl = qrRef.current?.toDataURL("image/png");
+      if (!qrDataUrl) throw new Error("Código QR no disponible.");
+      await descargarAcreditacionPNG({
+        evento,
+        acreditacion: { nombre: acreditacion.nombre, qrDataUrl },
+      });
     } catch {
       setError(true);
     } finally {
@@ -84,13 +91,16 @@ export default function Acreditacion({ evento, acreditacion }) {
                 </p>
               </div>
               <div className="mt-8 flex justify-center">
-                {acreditacion?.qrDataUrl ? (
-                  <img src={acreditacion.qrDataUrl} alt="Código QR de acceso" className="aspect-square w-[185px] rounded-xl" />
-                ) : (
-                  <div aria-hidden="true" className="grid aspect-square w-[185px] place-items-center rounded-xl border border-[#e5d3dc] bg-[#fdf9fa] text-[#9c8190]">
-                    <i className="icon-qrcode text-[70px]" />
-                  </div>
-                )}
+                <QRCodeCanvas
+                  ref={qrRef}
+                  value={acreditacion.qrToken}
+                  size={256}
+                  marginSize={4}
+                  level="M"
+                  className="aspect-square w-[185px] rounded-xl"
+                  aria-label="Código QR de acceso"
+                  role="img"
+                />
               </div>
               <p className="mt-5 text-center text-xs text-[#917480]">Presenta esta acreditación en el acceso.</p>
             </div>
@@ -109,7 +119,7 @@ export default function Acreditacion({ evento, acreditacion }) {
             <button
               type="button"
               onClick={descargar}
-              disabled={descargando || !acreditacion?.qrDataUrl}
+              disabled={descargando || !acreditacion?.qrToken}
               className="mt-6 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-xl bg-coral px-5 text-sm font-bold text-white transition-colors hover:bg-[#e95f57] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <i className={descargando ? "icon-spin1" : "icon-download"} aria-hidden="true" />

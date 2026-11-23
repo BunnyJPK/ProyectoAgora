@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { crearClienteAdmin } from "../lib/supabase/admin";
 import { createClient } from "../lib/supabase/server";
 
@@ -56,11 +57,11 @@ export async function registrarAsistente(datos) {
     return { ok: false, mensaje: "No se encontró el evento." };
   }
 
-  const { error } = await supabase.from("asistentes").insert({
-    evento_id: evento.id,
-    nombre_completo: nombre,
-    correo,
-  });
+  const { data: registro, error } = await supabase
+    .from("asistentes")
+    .insert({ evento_id: evento.id, nombre_completo: nombre, correo })
+    .select("qr_token")
+    .single();
 
   if (error?.code === "23505" && error.message?.includes("asistentes_evento_correo_idx")) {
     return { ok: false, mensaje: "Este correo ya está registrado en el evento." };
@@ -71,8 +72,65 @@ export async function registrarAsistente(datos) {
     return { ok: false, mensaje: "No se pudo completar el registro. Inténtalo nuevamente." };
   }
 
+  // ACCESO TEMPORAL A LA ACREDITACIÓN DEL REGISTRANTE
+  const cookieStore = await cookies();
+  cookieStore.set(`agora_acreditacion_${codigo}`, registro.qr_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: `/registro/${codigo}`,
+    maxAge: 60 * 60 * 24,
+  });
+
   revalidatePath("/eventos", "layout");
   return { ok: true };
+}
+
+// CONSULTA DE ACREDITACIÓN DEL REGISTRANTE
+export async function buscarAcreditacionPublica(codigo) {
+  if (!codigoValido.test(String(codigo))) return null;
+
+  const supabase = crearClienteAdmin();
+  const { data: evento, error: errorEvento } = await supabase
+    .from("eventos")
+    .select("id, nombre, fecha, hora_inicio, sede, codigo_publico")
+    .eq("codigo_publico", codigo)
+    .maybeSingle();
+
+  if (errorEvento) throw new Error("No se pudo consultar el evento.");
+  if (!evento) return null;
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get(`agora_acreditacion_${codigo}`)?.value;
+  let acreditacion = null;
+
+  if (uuidValido.test(String(token ?? ""))) {
+    const { data: asistente, error } = await supabase
+      .from("asistentes")
+      .select("nombre_completo, qr_token")
+      .eq("evento_id", evento.id)
+      .eq("qr_token", token)
+      .maybeSingle();
+
+    if (error) throw new Error("No se pudo consultar la acreditación.");
+    if (asistente) {
+      acreditacion = {
+        nombre: asistente.nombre_completo,
+        qrToken: asistente.qr_token,
+      };
+    }
+  }
+
+  return {
+    evento: {
+      nombre: evento.nombre,
+      fecha: evento.fecha,
+      hora: evento.hora_inicio?.slice(0, 5) ?? "",
+      sede: evento.sede,
+      slug: evento.codigo_publico,
+    },
+    acreditacion,
+  };
 }
 
 // CONSULTA DE ASISTENTES PARA ORGANIZADORES
@@ -105,7 +163,7 @@ export async function listarAsistentesDelEvento(eventoId) {
   for (let inicio = 0; ; inicio += tamanoPagina) {
     const { data, error } = await supabase
       .from("asistentes")
-      .select("id, nombre_completo, correo, registrado_en")
+      .select("id, nombre_completo, correo, qr_token, registrado_en")
       .eq("evento_id", eventoId)
       .order("registrado_en", { ascending: false })
       .order("id", { ascending: false })
@@ -145,6 +203,6 @@ export async function listarAsistentesDelEvento(eventoId) {
     nombre: asistente.nombre_completo,
     correo: asistente.correo,
     presente: presentes.has(asistente.id),
-    qrDataUrl: null,
+    qrToken: asistente.qr_token,
   }));
 }

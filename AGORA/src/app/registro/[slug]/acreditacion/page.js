@@ -1,13 +1,12 @@
 import { notFound } from "next/navigation";
 import Acreditacion from "../../../../components/registro/Acreditacion";
-import { buscarEventoPorSlug, buscarAcreditacion } from "../../../../lib/datos";
+import { buscarAcreditacionPublica } from "../../../../actions/registros";
 
-export default async function AcreditacionPage({ params, searchParams }) {
+export default async function AcreditacionPage({ params }) {
   const { slug } = await params;
-  const { registro } = await searchParams;
-  const evento = buscarEventoPorSlug(slug);
+  const datos = await buscarAcreditacionPublica(slug);
 
-  if (!evento) notFound();
+  if (!datos) notFound();
 
-  return <Acreditacion evento={evento} acreditacion={buscarAcreditacion(evento.id, registro)} />;
+  return <Acreditacion evento={datos.evento} acreditacion={datos.acreditacion} />;
 }

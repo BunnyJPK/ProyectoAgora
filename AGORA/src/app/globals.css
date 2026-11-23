@@ -40,3 +40,8 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Evita que las animaciones CSS anteriores se superpongan con GSAP. */
+.gsap-reveal > :first-child {
+  animation: none;
+}

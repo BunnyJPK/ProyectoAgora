@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { QRCodeCanvas } from "qrcode.react";
 import EventPageHeader from "./EventPageHeader";
 import AlertMessage from "../ui/AlertMessage";
 import descargarAcreditacionPNG from "../../lib/descargarAcreditacionPNG";
@@ -19,18 +20,28 @@ function EstadoAcceso({ presente }) {
 
 function FilaAsistente({ asistente, evento }) {
   const [error, setError] = useState(false);
+  const [abierta, setAbierta] = useState(false);
+  const qrRef = useRef(null);
 
   async function descargar() {
     setError(false);
     try {
-      await descargarAcreditacionPNG({ evento, acreditacion: asistente });
+      const qrDataUrl = qrRef.current?.toDataURL("image/png");
+      if (!qrDataUrl) throw new Error("Código QR no disponible.");
+      await descargarAcreditacionPNG({
+        evento,
+        acreditacion: { nombre: asistente.nombre, qrDataUrl },
+      });
     } catch {
       setError(true);
     }
   }
 
   return (
-    <details className="group border-b border-[#eee4e8] last:border-b-0">
+    <details
+      onToggle={(e) => setAbierta(e.currentTarget.open)}
+      className="group border-b border-[#eee4e8] last:border-b-0"
+    >
       <summary className="grid cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-5 transition-colors hover:bg-[#fdf9f8] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-coral sm:px-7 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,.8fr)_auto] lg:gap-5 [&::-webkit-details-marker]:hidden">
         <div className="min-w-0">
           <span className="block truncate text-[13px] font-bold text-ciruela sm:text-sm">
@@ -69,10 +80,25 @@ function FilaAsistente({ asistente, evento }) {
             <dd className="mt-2"><EstadoAcceso presente={asistente.presente} /></dd>
           </div>
         </dl>
+        {abierta && asistente.qrToken && (
+          <div className="mt-6 flex flex-col items-start gap-2">
+            <p className="text-xs font-semibold text-[#997d8b]">Acreditación QR</p>
+            <QRCodeCanvas
+              ref={qrRef}
+              value={asistente.qrToken}
+              size={256}
+              marginSize={4}
+              level="M"
+              className="w-[148px] rounded-lg border border-[#eee4e8]"
+              role="img"
+              aria-label={`Código QR de ${asistente.nombre}`}
+            />
+          </div>
+        )}
         <div className="mt-6 flex justify-end">
           <button
             type="button"
-            disabled={!asistente.qrDataUrl}
+            disabled={!asistente.qrToken}
             onClick={descargar}
             className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#eadde3] px-4 text-xs font-semibold text-ciruela hover:border-coral disabled:cursor-not-allowed disabled:opacity-50"
           >

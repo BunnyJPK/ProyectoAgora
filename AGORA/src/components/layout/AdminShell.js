@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import MobileHeader from "./MobileHeader";
+import GsapReveal from "../ui/GsapReveal";
 
 export default function AdminShell({ children, eventos, nombreOrganizador }) {
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -34,7 +35,9 @@ export default function AdminShell({ children, eventos, nombreOrganizador }) {
       />
 
       <main className="min-w-0 flex-1 px-5 pt-10 pb-16 sm:px-7 sm:pt-12 lg:px-[clamp(32px,6.25vw,90px)] lg:pt-[77px] lg:pb-[90px]">
-        {children}
+        <GsapReveal key={ruta} className="w-full">
+          {children}
+        </GsapReveal>
       </main>
     </div>
   );

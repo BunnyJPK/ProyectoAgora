@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import AlertMessage from "../ui/AlertMessage";
 import { registrarAsistente } from "../../actions/registros";
 
@@ -9,7 +10,7 @@ const input = "min-h-13 w-full rounded-xl border border-[#e8dce1] bg-[#fffdfc] p
 export default function RegistrationForm({ evento }) {
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
-  const [registrado, setRegistrado] = useState(false);
+  const router = useRouter();
 
   async function enviar(e) {
     e.preventDefault();
@@ -31,7 +32,7 @@ export default function RegistrationForm({ evento }) {
         setError(resultado.mensaje);
         return;
       }
-      setRegistrado(true);
+      router.replace(`/registro/${encodeURIComponent(evento.slug)}/acreditacion`);
     } catch {
       setError("No se pudo completar tu registro. Inténtalo de nuevo.");
     } finally {
@@ -39,19 +40,6 @@ export default function RegistrationForm({ evento }) {
     }
   }
 
-  if (registrado) {
-    return (
-      <div className="py-4">
-        <div className="mb-5 flex size-14 items-center justify-center rounded-full bg-green-50 text-green-700">
-          <i className="icon-ok-circled text-3xl" aria-hidden="true" />
-        </div>
-        <h2 className="font-display text-[25px] font-extrabold leading-tight text-ciruela">Registro completado</h2>
-        <p className="mt-3 text-sm leading-7 text-[#866e79]">
-          Tu inscripción a <strong className="text-ciruela">{evento.nombre}</strong> se guardó correctamente.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div>
