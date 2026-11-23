@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "../lib/supabase/server";
 
-// LOGIN DE ORGANIZADORES
 export async function iniciarSesion(formData) {
   const email = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
@@ -33,7 +32,6 @@ export async function iniciarSesion(formData) {
   redirect("/eventos");
 }
 
-// CIERRE DE SESIÓN
 export async function cerrarSesion() {
   const supabase = await createClient();
   const { error } = await supabase.auth.signOut();
@@ -46,7 +44,6 @@ export async function cerrarSesion() {
   redirect("/login");
 }
 
-// REGISTRO DE ORGANIZADORES
 export async function registrarOrganizador(formData) {
   const nombre = String(formData.get("nombre") || "").trim();
   const email = String(formData.get("email") || "").trim().toLowerCase();
