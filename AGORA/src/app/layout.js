@@ -3,8 +3,10 @@ import "./globals.css";
 export const metadata = {
   title: "ÁGORA | Software para eventos",
   description: "Registro y control de acceso para eventos",
+  manifest: "/manifest.json",
   icons: {
     icon: "/brand/agora_icon.png",
+    apple: "/icons/apple-touch-icon.png",
   },
 };
 

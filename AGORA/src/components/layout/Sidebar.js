@@ -1,11 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { cerrarSesion } from "../../lib/acciones";
-import AlertMessage from "../ui/AlertMessage";
+import { cerrarSesion } from "../../actions/auth";
 import Link from "next/link";
-import { buscarEvento } from "../../lib/datos";
 
 const opcionesGenerales = [
   { href: "/eventos", icono: "icon-right-open-big", texto: "Mis eventos" },
@@ -33,22 +29,9 @@ function EnlaceMenu({ href, icono, texto, activo, alNavegar }) {
   );
 }
 
-export default function Sidebar({ menuAbierto, cerrarMenu, ruta }) {
-  const router = useRouter();
-  const [errorSesion, setErrorSesion] = useState(false);
-
-  async function salir() {
-    setErrorSesion(false);
-    try {
-      await cerrarSesion();
-      router.replace("/login");
-    } catch {
-      setErrorSesion(true);
-    }
-  }
-
+export default function Sidebar({ menuAbierto, cerrarMenu, ruta, eventos }) {
   const idEvento = ruta?.match(/^\/eventos\/([^/]+)/)?.[1];
-  const evento = idEvento && idEvento !== "nuevo" ? buscarEvento(decodeURIComponent(idEvento)) : null;
+  const evento = eventos.find((item) => item.id === idEvento) ?? null;
   const rutaEvento = evento ? `/eventos/${encodeURIComponent(evento.id)}` : null;
 
   return (
@@ -100,17 +83,14 @@ export default function Sidebar({ menuAbierto, cerrarMenu, ruta }) {
         </span>
         <div>
           <strong className="block text-[13px]">Organizador</strong>
-          <button type="button" onClick={salir} className="mt-1.5 inline-flex cursor-pointer items-center gap-1.5 text-xs text-[#ead5de] hover:text-white">
-            <i className="icon-logout" aria-hidden="true" />
-            Cerrar sesión
-          </button>
+          <form action={cerrarSesion} className="mt-1.5">
+            <button type="submit" className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-[#ead5de] hover:text-white">
+              <i className="icon-logout" aria-hidden="true" />
+              Cerrar sesión
+            </button>
+          </form>
         </div>
       </div>
-      {errorSesion && (
-        <div className="mt-4">
-          <AlertMessage variant="error" title="No se pudo cerrar sesión">Inténtalo de nuevo.</AlertMessage>
-        </div>
-      )}
     </aside>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import CopyLinkButton from "../ui/CopyLinkButton";
+import DeleteEvent from "./DeleteEvent";
 import { formatearFecha } from "../../lib/fecha";
 
 export default function EventOverview({ evento }) {
@@ -21,9 +22,18 @@ export default function EventOverview({ evento }) {
         Volver a Mis eventos
       </Link>
 
-      <h1 className="max-w-[850px] font-display text-[clamp(28px,3.1vw,42px)] leading-[1.2] font-extrabold tracking-[-0.6px] text-ciruela">
-        {evento.nombre}
-      </h1>
+      <div className="flex flex-wrap items-start justify-between gap-5">
+        <h1 className="min-w-0 flex-1 font-display text-[clamp(28px,3.1vw,42px)] leading-[1.2] font-extrabold tracking-[-0.6px] text-ciruela">
+          {evento.nombre}
+        </h1>
+        <Link
+          href={`/eventos/${encodeURIComponent(evento.id)}/editar`}
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[#e9dee1] bg-white px-5 text-sm font-semibold text-ciruela transition-colors hover:border-coral"
+        >
+          <i className="icon-docs" aria-hidden="true" />
+          Editar evento
+        </Link>
+      </div>
       <p className="mt-3 text-sm leading-7 text-[#805d6c]">
         Consulta el registro y controla los accesos de tu evento.
       </p>
@@ -102,6 +112,8 @@ export default function EventOverview({ evento }) {
           </div>
         </article>
       </div>
+
+      <DeleteEvent evento={evento} />
     </section>
   );
 }

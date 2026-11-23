@@ -1,39 +1,16 @@
-"use client";
+import { redirect } from "next/navigation";
+import { createClient } from "../../lib/supabase/server";
+import AdminShell from "../../components/layout/AdminShell";
+import { listarMisEventos } from "../../actions/eventos";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
-import Sidebar from "../../components/layout/Sidebar";
-import MobileHeader from "../../components/layout/MobileHeader";
+export default async function AdminLayout({ children }) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getClaims();
 
-export default function AdminLayout({ children }) {
-  const [menuAbierto, setMenuAbierto] = useState(false);
-  const ruta = usePathname();
+  if (error || !data?.claims) {
+    redirect("/login");
+  }
 
-  return (
-    <div className="min-h-svh bg-hueso text-ciruela lg:flex">
-      <MobileHeader
-        abrirMenu={() => setMenuAbierto(true)}
-        menuAbierto={menuAbierto}
-      />
-
-      {menuAbierto && (
-        <button
-          type="button"
-          onClick={() => setMenuAbierto(false)}
-          aria-label="Cerrar menú"
-          className="fixed inset-0 z-40 cursor-pointer bg-black/55 lg:hidden"
-        />
-      )}
-
-      <Sidebar
-        menuAbierto={menuAbierto}
-        cerrarMenu={() => setMenuAbierto(false)}
-        ruta={ruta}
-      />
-
-      <main className="min-w-0 flex-1 px-5 pt-10 pb-16 sm:px-7 sm:pt-12 lg:px-[clamp(32px,6.25vw,90px)] lg:pt-[77px] lg:pb-[90px]">
-        {children}
-      </main>
-    </div>
-  );
+  const eventos = await listarMisEventos();
+  return <AdminShell eventos={eventos}>{children}</AdminShell>;
 }

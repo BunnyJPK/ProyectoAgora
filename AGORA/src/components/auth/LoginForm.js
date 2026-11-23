@@ -1,32 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useFormStatus } from "react-dom";
 import AlertMessage from "../ui/AlertMessage";
-import { iniciarSesion } from "../../lib/acciones";
+import { iniciarSesion } from "../../actions/auth";
 
-export default function LoginForm() {
+function BotonIngresar() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="mt-[18px] flex h-14 cursor-pointer items-center justify-center gap-3 rounded-xl bg-ciruela text-base font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#500c2d] active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral disabled:cursor-wait disabled:opacity-70"
+    >
+      <i className={pending ? "icon-spin1" : "icon-login"} aria-hidden="true" />
+      {pending ? "Ingresando..." : "Ingresar"}
+    </button>
+  );
+}
+
+export default function LoginForm({ mensajeError = "" }) {
   const [verPassword, setVerPassword] = useState(false);
-  const [enviando, setEnviando] = useState(false);
-  const [error, setError] = useState(false);
-
-  async function enviar(evento) {
-    evento.preventDefault();
-    setEnviando(true);
-    setError(false);
-
-    const datos = new FormData(evento.currentTarget);
-    try {
-      await iniciarSesion({
-        email: String(datos.get("email") || "").trim(),
-        password: String(datos.get("password") || ""),
-      });
-      window.location.assign("/eventos");
-    } catch {
-      setError(true);
-    } finally {
-      setEnviando(false);
-    }
-  }
 
   return (
     <div className="w-full max-w-[390px] motion-safe:animate-[aparecer_0.6s_ease-out_both]">
@@ -35,7 +31,7 @@ export default function LoginForm() {
       </h1>
       <p className="mt-2 text-[15px] leading-relaxed text-[#7f6672]">Ingresa tus credenciales para continuar.</p>
 
-      <form onSubmit={enviar} className="mt-9 flex flex-col gap-[18px] lg:mt-[42px]">
+      <form action={iniciarSesion} className="mt-9 flex flex-col gap-[18px] lg:mt-[42px]">
         <input
           type="email"
           name="email"
@@ -66,20 +62,21 @@ export default function LoginForm() {
           </button>
         </div>
 
-        {error && (
+        {mensajeError && (
           <AlertMessage variant="error" title="No se pudo iniciar sesión">
-            Verifica tus datos e inténtalo nuevamente.
+            {mensajeError}
           </AlertMessage>
         )}
-        <button
-          type="submit"
-          disabled={enviando}
-          className="mt-[18px] flex h-14 cursor-pointer items-center justify-center gap-3 rounded-xl bg-ciruela text-base font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#500c2d] active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral disabled:cursor-wait disabled:opacity-70"
-        >
-          <i className={enviando ? "icon-spin1" : "icon-login"} aria-hidden="true" />
-          {enviando ? "Ingresando..." : "Ingresar"}
-        </button>
+
+        <BotonIngresar />
       </form>
+
+      <p className="mt-7 text-center text-sm text-[#7f6672]">
+        ¿Aún no tienes cuenta?{" "}
+        <Link href="/registro-organizador" className="font-semibold text-ciruela underline-offset-4 hover:underline">
+          Crear cuenta
+        </Link>
+      </p>
     </div>
   );
 }
