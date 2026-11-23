@@ -29,7 +29,7 @@ function EnlaceMenu({ href, icono, texto, activo, alNavegar }) {
   );
 }
 
-export default function Sidebar({ menuAbierto, cerrarMenu, ruta, eventos }) {
+export default function Sidebar({ menuAbierto, cerrarMenu, ruta, eventos, nombreOrganizador }) {
   const idEvento = ruta?.match(/^\/eventos\/([^/]+)/)?.[1];
   const evento = eventos.find((item) => item.id === idEvento) ?? null;
   const rutaEvento = evento ? `/eventos/${encodeURIComponent(evento.id)}` : null;
@@ -82,7 +82,7 @@ export default function Sidebar({ menuAbierto, cerrarMenu, ruta, eventos }) {
           <i className="icon-user" />
         </span>
         <div>
-          <strong className="block text-[13px]">Organizador</strong>
+          <strong className="block break-words text-[13px]">{nombreOrganizador}</strong>
           <form action={cerrarSesion} className="mt-1.5">
             <button type="submit" className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-[#ead5de] hover:text-white">
               <i className="icon-logout" aria-hidden="true" />
