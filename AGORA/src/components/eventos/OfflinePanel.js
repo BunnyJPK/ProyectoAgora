@@ -6,6 +6,7 @@ import EventPageHeader from "./EventPageHeader";
 
 export default function OfflinePanel({ evento }) {
   const [enLinea, setEnLinea] = useState(null);
+  const [baseOffline, setBaseOffline] = useState("comprobando");
 
   useEffect(() => {
     const actualizarConexion = () => setEnLinea(navigator.onLine);
@@ -17,6 +18,42 @@ export default function OfflinePanel({ evento }) {
     return () => {
       window.removeEventListener("online", actualizarConexion);
       window.removeEventListener("offline", actualizarConexion);
+    };
+  }, []);
+
+  // COMPROBAR LA BASE PWA (SIN DESCARGAR DATOS DE ASISTENTES)
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !("caches" in window)) {
+      setBaseOffline("no-disponible");
+      return;
+    }
+
+    let activo = true;
+
+    const comprobar = async () => {
+      try {
+        const registro = await navigator.serviceWorker.getRegistration("/");
+        const respaldo = await caches.match("/offline.html");
+        if (activo) {
+          setBaseOffline(registro?.active && respaldo ? "lista" : "pendiente");
+        }
+      } catch {
+        if (activo) setBaseOffline("no-disponible");
+      }
+    };
+
+    const falloRegistro = () => setBaseOffline("no-disponible");
+
+    comprobar();
+    window.addEventListener("agora-sw-listo", comprobar);
+    window.addEventListener("agora-sw-error", falloRegistro);
+    navigator.serviceWorker.addEventListener("controllerchange", comprobar);
+
+    return () => {
+      activo = false;
+      window.removeEventListener("agora-sw-listo", comprobar);
+      window.removeEventListener("agora-sw-error", falloRegistro);
+      navigator.serviceWorker.removeEventListener("controllerchange", comprobar);
     };
   }, []);
 
@@ -51,6 +88,24 @@ export default function OfflinePanel({ evento }) {
               <i className="icon-attention" aria-hidden="true" /> Sin conexión detectada
             </span>
           )}
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[#eee4e8] pt-5">
+          <div>
+            <h3 className="text-sm font-semibold text-ciruela">Archivos básicos de ÁGORA</h3>
+            <p className="mt-1 text-[13px] text-[#927986]">
+              Respaldo de pantalla y recursos públicos, sin datos de asistentes.
+            </p>
+          </div>
+          <span role="status" className="text-xs font-semibold text-ciruela">
+            {baseOffline === "lista"
+              ? "Caché preparada"
+              : baseOffline === "comprobando"
+                ? "Comprobando..."
+                : baseOffline === "pendiente"
+                  ? "Pendiente de instalar"
+                  : "No disponible"}
+          </span>
         </div>
       </div>
 

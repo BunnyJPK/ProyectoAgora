@@ -1,4 +1,5 @@
 import "./globals.css";
+import RegistrarServiceWorker from "../components/pwa/RegistrarServiceWorker";
 
 export const metadata = {
   title: "ÁGORA | Software para eventos",
@@ -16,7 +17,10 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="stylesheet" href="/fontello/css/fontello.css" />
       </head>
-      <body>{children}</body>
+      <body>
+        <RegistrarServiceWorker />
+        {children}
+      </body>
     </html>
   );
 }
